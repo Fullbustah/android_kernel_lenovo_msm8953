@@ -354,14 +354,11 @@ rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 	if (dev->port_usb->is_fixed)
 		size = max_t(size_t, size, dev->port_usb->fixed_out_len);
 	spin_unlock_irqrestore(&dev->lock, flags);
-<<<<<<< HEAD
 
 	if (dev->rx_needed_headroom)
 		reserve_headroom = ALIGN(dev->rx_needed_headroom, 4);
 
 	pr_debug("%s: size: %zu + %d(hr)", __func__, size, reserve_headroom);
-=======
->>>>>>> a312bb66329ab438f27724ab1429416bf071a10f
 
 	skb = alloc_skb(size + reserve_headroom, gfp_flags);
 	if (skb == NULL) {
@@ -763,7 +760,8 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 		dev->tx_aggr_cnt[n-1]++;
 
 		/* sg_ctx is only accessible here, can use lock-free version */
-		__skb_queue_purge(&sg_ctx->skbs);
+		while ((skb = __skb_dequeue(&sg_ctx->skbs)) != NULL)
+			dev_kfree_skb_any(skb);
 	}
 
 	dev->net->stats.tx_packets += n;
